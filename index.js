@@ -2,13 +2,13 @@ const core = require("@actions/core");
 const github = require("@actions/github");
 const Heroku = require("heroku-client");
 
-async function run() {
-  const ctx = github.context;
-  core.debug(JSON.stringify(ctx));
-  const pr = ctx.payload.pull_request;
-  core.debug(JSON.stringify(pr));
-  const fork = pr.head.repo.fork;
+const ctx = github.context;
+core.debug(JSON.stringify(ctx));
+const pr = ctx.payload.pull_request;
+core.debug(JSON.stringify(pr));
+const fork = pr.head.repo.fork;
 
+async function run() {
   if (fork) {
     core.debug("don't allow forks");
   }
