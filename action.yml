@@ -1,0 +1,6 @@
+name: "Create Heroku Review App"
+description: "Creates a Review App in Heroku for the current PR"
+inputs:
+runs:
+  using: "node12"
+  main: "index.js"
