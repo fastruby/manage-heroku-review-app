@@ -1,7 +1,6 @@
 const core = require("@actions/core");
 const github = require("@actions/github");
-// const Heroku = require("heroku-client");
-// const heroku = new Heroku({ token: process.env.HEROKU_API_TOKEN });
+const Heroku = require("heroku-client");
 
 const ctx = github.context;
 
@@ -33,6 +32,10 @@ core.debug(
     action,
   })
 );
+
+const heroku = new Heroku({ token: process.env.HEROKU_API_TOKEN });
+
+core.debug(JSON.stringify(heroku));
 
 // We can delete a review app without them being a collaborator
 // as the only people that can close PRs are maintainers or the author
