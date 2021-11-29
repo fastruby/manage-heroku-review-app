@@ -9304,167 +9304,98 @@ const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 const Heroku = __nccwpck_require__(504);
 
-const ctx = github.context;
+async function run() {
+  const ctx = github.context;
+  const pr = ctx.pull_request;
+  const fork = pr.head.repo.fork;
 
-core.debug(JSON.stringify(ctx));
+  if (fork) {
+    core.debug("don't allow forks");
+  }
 
-const event = ctx.eventName;
-const branch = ctx.ref;
-const version = ctx.sha;
-const fork = ctx.payload.repository.name;
-const pr_number = ctx.payload.pull_request.number;
-const repo_url = ctx.payload.repository.html_url;
-const source_url = `${repo_url}/tarball/${branch}`;
-const action = ctx.payload.action;
+  const branch = pr.head.ref;
+  const version = ctx.sha;
+  const pr_number = pr.number;
+  const repo_url = ctx.payload.repository.html_url;
+  const source_url = `${repo_url}/tarball/${branch}`;
 
-// let fork_repo_id;
-// if (fork) {
-//   fork_repo_id = pr.head.repo.id;
-// }
+  core.debug(
+    JSON.stringify({
+      branch,
+      version,
+      pr_number,
+      repo_url,
+      source_url,
+    })
+  );
 
-core.debug(
-  JSON.stringify({
-    event,
-    branch,
-    version,
-    fork,
-    pr_number,
-    repo_url,
-    source_url,
-    action,
-  })
-);
+  const heroku = new Heroku({ token: process.env.HEROKU_API_TOKEN });
 
-const heroku = new Heroku({ token: process.env.HEROKU_API_TOKEN });
+  core.info("Fetching review app list");
+  const reviewApps = await heroku.get(
+    `/pipelines/${process.env.HEROKU_PIPELINE_ID}/review-apps`
+  );
 
-core.debug(JSON.stringify(heroku));
+  core.debug(JSON.stringify(reviewApps));
 
-// We can delete a review app without them being a collaborator
-// as the only people that can close PRs are maintainers or the author
-// if (action === "closed") {
-//   // Fetch all PRs
-//   tools.log.pending("Listing review apps");
-//   const reviewApps = await heroku.get(
-//     `/pipelines/${process.env.HEROKU_PIPELINE_ID}/review-apps`
-//   );
-//   tools.log.complete("Fetched review app list");
+  // Filter to the one for this PR
+  const app = reviewApps.find((app) => app.pr_number == pr_number);
+  if (app) {
+    core.info("Deleting review app");
+    await heroku.delete(`/review-apps/${app.id}`);
+    core.info("Review app deleted");
+  }
 
-//   // Filter to the one for this PR
-//   const app = reviewApps.find((app) => app.pr_number == pr_number);
-//   if (!app) {
-//     tools.log.info(`Could not find review app for PR number ${pr_number}`);
-//     return;
-//   }
+  // let requiredCollaboratorPermission = process.env.COLLABORATOR_PERMISSION;
+  // if (requiredCollaboratorPermission) {
+  //   requiredCollaboratorPermission = requiredCollaboratorPermission.split(
+  //     ","
+  //   );
+  // } else {
+  //   requiredCollaboratorPermission = ["triage", "write", "maintain", "admin"];
+  // }
 
-//   // Delete the PR
-//   tools.log.pending("Deleting review app");
-//   await heroku.delete(`/review-apps/${app.id}`);
-//   tools.log.complete("Review app deleted");
-//   return;
-// }
+  // const perms = await tools.github.repos.getCollaboratorPermissionLevel({
+  //   ...tools.context.repo,
+  //   username: tools.context.actor,
+  // });
 
-// // Do they have the required permissions?
-// let requiredCollaboratorPermission = process.env.COLLABORATOR_PERMISSION;
-// if (requiredCollaboratorPermission) {
-//   requiredCollaboratorPermission = requiredCollaboratorPermission.split(
-//     ","
-//   );
-// } else {
-//   requiredCollaboratorPermission = ["triage", "write", "maintain", "admin"];
-// }
+  // if (!requiredCollaboratorPermission.includes(perms.data.permission)) {
+  //   tools.exit.success("User is not a collaborator. Skipping");
+  // }
 
-// const reviewAppLabelName =
-//   process.env.REVIEW_APP_LABEL_NAME || "review-app";
+  // tools.log.info(`User is a collaborator: ${perms.data.permission}`);
 
-// const perms = await tools.github.repos.getCollaboratorPermissionLevel({
-//   ...tools.context.repo,
-//   username: tools.context.actor,
-// });
+  // Otherwise we can complete it in this run
+  try {
+    core.info("Creating review app");
+    await heroku.post("/review-apps", {
+      body: {
+        branch,
+        pipeline: process.env.HEROKU_PIPELINE_ID,
+        source_blob: {
+          url: source_url,
+          version,
+        },
+        pr_number,
+        environment: {
+          GIT_REPO_URL: repo_url,
+        },
+      },
+    });
+    core.info("Created review app");
+  } catch (e) {
+    // A 409 is a conflict, which means the app already exists
+    if (e.statusCode !== 409) {
+      throw e;
+    }
+    tools.log.complete("Review app is already created");
+  }
 
-// if (!requiredCollaboratorPermission.includes(perms.data.permission)) {
-//   tools.exit.success("User is not a collaborator. Skipping");
-// }
+  tools.log.success("Action complete");
+}
 
-// tools.log.info(`User is a collaborator: ${perms.data.permission}`);
-
-// let createReviewApp = false;
-
-// if (["opened", "reopened", "synchronize"].indexOf(action) !== -1) {
-//   tools.log.info("PR opened by collaborator");
-//   createReviewApp = true;
-//   await tools.github.issues.addLabels({
-//     ...tools.context.repo,
-//     labels: ["review-app"],
-//     issue_number: pr_number,
-//   });
-// } else if (action === "labeled") {
-//   const labelName = tools.context.payload.label.name;
-//   tools.log.info(`${labelName} label was added by collaborator`);
-
-//   if (labelName === reviewAppLabelName) {
-//     createReviewApp = true;
-//   } else {
-//     tools.log.debug(`Unexpected label, not creating app: ${labelName}`);
-//   }
-// }
-
-// if (createReviewApp) {
-//   // If it's a fork, creating the review app will fail as there are no secrets available
-//   if (fork && event == "pull_request") {
-//     tools.log.pending("Fork detected. Exiting");
-//     tools.log.pending(
-//       "If you would like to support PRs from forks, use the pull_request_target event"
-//     );
-//     tools.log.success("Action complete");
-//     return;
-//   }
-
-//   // Otherwise we can complete it in this run
-//   try {
-//     tools.log.pending("Creating review app");
-//     const resp = await heroku.post("/review-apps", {
-//       body: {
-//         branch,
-//         pipeline: process.env.HEROKU_PIPELINE_ID,
-//         source_blob: {
-//           url: source_url,
-//           version,
-//         },
-//         fork_repo_id,
-//         pr_number,
-//         environment: {
-//           GIT_REPO_URL: repo_url,
-//         },
-//       },
-//     });
-//     tools.log.complete("Created review app");
-//   } catch (e) {
-//     // A 409 is a conflict, which means the app already exists
-//     if (e.statusCode !== 409) {
-//       throw e;
-//     }
-//     tools.log.complete("Review app is already created");
-//   }
-// }
-
-// tools.log.success("Action complete");
-// },
-// {
-// event: [
-//   "pull_request.opened",
-//   "pull_request.reopened",
-//   "pull_request.synchronize",
-//   "pull_request.labeled",
-//   "pull_request.closed",
-//   "pull_request_target.opened",
-//   "pull_request_target.reopened",
-//   "pull_request_target.synchronize",
-//   "pull_request_target.labeled",
-//   "pull_request_target.closed",
-// ],
-// secrets: ["GITHUB_TOKEN", "HEROKU_API_TOKEN", "HEROKU_PIPELINE_ID"],
-// }
-// );
+run();
 
 })();
 
