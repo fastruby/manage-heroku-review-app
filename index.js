@@ -1,7 +1,7 @@
 const core = require("@actions/core");
 const github = require("@actions/github");
-const Heroku = require("heroku-client");
-const heroku = new Heroku({ token: process.env.HEROKU_API_TOKEN });
+// const Heroku = require("heroku-client");
+// const heroku = new Heroku({ token: process.env.HEROKU_API_TOKEN });
 
 const ctx = github.context;
 
