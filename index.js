@@ -4,7 +4,7 @@ const Heroku = require("heroku-client");
 
 async function run() {
   const ctx = github.context;
-  const pr = ctx.pull_request;
+  const pr = ctx.payload.pull_request;
   const fork = pr.head.repo.fork;
 
   if (fork) {
