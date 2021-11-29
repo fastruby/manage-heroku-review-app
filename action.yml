@@ -2,4 +2,4 @@ name: "Create Heroku Review App"
 description: "Creates a Review App in Heroku for the current PR"
 runs:
   using: "node12"
-  main: "index.js"
+  main: "dist/index.js"
