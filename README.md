@@ -73,7 +73,7 @@ You have to setup 2 secrets in your repo (1):
 
 \*2 Go to `Account settings`, look for the `API Key` section and click `Reveal` to see the token
 
-\*3 Open your pipeline in Heroku's website and extract the uuid from the url ("https://dashboard.heroku.com/pipelines/abc2e115-5cd9-48e9-b591-cf66c265e845" => "abc2e115-5cd9-48e9-b591-cf66c265e845")
+\*3 Open your pipeline in Heroku's website and extract the uuid from the url (`https://dashboard.heroku.com/pipelines/abc2e115-5cd9-48e9-b591-cf66c265e845` => `abc2e115-5cd9-48e9-b591-cf66c265e845`)
 
 ## In Heroku:
 
