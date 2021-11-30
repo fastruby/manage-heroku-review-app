@@ -9304,11 +9304,13 @@ const core = __nccwpck_require__(2186);
 const github = __nccwpck_require__(5438);
 const Heroku = __nccwpck_require__(504);
 
-async function run() {
-  const ctx = github.context;
-  const pr = ctx.pull_request;
-  const fork = pr.head.repo.fork;
+const ctx = github.context;
+core.debug(JSON.stringify(ctx));
+const pr = ctx.payload.pull_request;
+core.debug(JSON.stringify(pr));
+const fork = pr.head.repo.fork;
 
+async function run() {
   if (fork) {
     core.debug("don't allow forks");
   }
