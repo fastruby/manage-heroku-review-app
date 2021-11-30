@@ -51,7 +51,9 @@ jobs:
 
 # Configuration
 
-Inputs:
+## Inputs:
+
+### `action`
 
 - `create` will trigger a Review App creation for the current PR, will fail if the Review App already exists
 - `destroy` will trigger a Review App destroy for the current PR, if any
@@ -67,8 +69,10 @@ You have to setup 2 secrets in your repo (1):
 - HEROKU_API_TOKEN: you can get this from your Heroku's settings (2)
 - HEROKU_PIPELINE_ID: you can get this from the URL of the specific pipeline (3)
 
-*1 Go to `Settings` (of the repo), select `Secrets` on the sidebar, and click `New repository secret`
-*2 Go to `Account settings`, look for the `API Key` section and click `Reveal` to see the token
+\*1 Go to `Settings` (of the repo), select `Secrets` on the sidebar, and click `New repository secret`
+
+\*2 Go to `Account settings`, look for the `API Key` section and click `Reveal` to see the token
+
 \*3 Open your pipeline in Heroku's website and extract the uuid from the url ("https://dashboard.heroku.com/pipelines/abc2e115-5cd9-48e9-b591-cf66c265e845" => "abc2e115-5cd9-48e9-b591-cf66c265e845")
 
 ## In Heroku:
