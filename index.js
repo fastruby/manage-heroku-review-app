@@ -3,9 +3,9 @@ const github = require("@actions/github");
 const Heroku = require("heroku-client");
 
 const ctx = github.context;
-core.debug(JSON.stringify(ctx));
+// core.debug(JSON.stringify(ctx));
 const pr = ctx.payload.pull_request;
-core.debug(JSON.stringify(pr));
+// core.debug(JSON.stringify(pr));
 const fork = pr.head.repo.fork;
 
 async function run() {
@@ -19,31 +19,43 @@ async function run() {
   const repo_url = ctx.payload.repository.html_url;
   const source_url = `${repo_url}/tarball/${branch}`;
 
-  core.debug(
-    JSON.stringify({
-      branch,
-      version,
-      pr_number,
-      repo_url,
-      source_url,
-    })
-  );
+  // core.debug(
+  //   JSON.stringify({
+  //     branch,
+  //     version,
+  //     pr_number,
+  //     repo_url,
+  //     source_url,
+  //   })
+  // );
 
-  const heroku = new Heroku({ token: process.env.HEROKU_API_TOKEN });
+  core.debug("connecting to heroku");
+  let heroku;
+  try {
+    heroku = new Heroku({ token: process.env.HEROKU_API_TOKEN });
+  } catch (error) {
+    core.error(error);
+    return;
+  }
 
   core.info("Fetching review app list");
-  const reviewApps = await heroku.get(
-    `/pipelines/${process.env.HEROKU_PIPELINE_ID}/review-apps`
-  );
+  try {
+    const reviewApps = await heroku.get(
+      `/pipelines/${process.env.HEROKU_PIPELINE_ID}/review-apps`
+    );
 
-  core.debug(JSON.stringify(reviewApps));
+    core.debug(JSON.stringify(reviewApps));
 
-  // Filter to the one for this PR
-  const app = reviewApps.find((app) => app.pr_number == pr_number);
-  if (app) {
-    core.info("Deleting review app");
-    await heroku.delete(`/review-apps/${app.id}`);
-    core.info("Review app deleted");
+    // Filter to the one for this PR
+    const app = reviewApps.find((app) => app.pr_number == pr_number);
+    if (app) {
+      core.info("Deleting review app");
+      await heroku.delete(`/review-apps/${app.id}`);
+      core.info("Review app deleted");
+    }
+  } catch (error) {
+    core.error(error);
+    return;
   }
 
   // let requiredCollaboratorPermission = process.env.COLLABORATOR_PERMISSION;
@@ -89,10 +101,10 @@ async function run() {
     if (e.statusCode !== 409) {
       throw e;
     }
-    tools.log.complete("Review app is already created");
+    core.error("Review app is already created");
   }
 
-  tools.log.success("Action complete");
+  core.info("Action completed");
 }
 
 run();
