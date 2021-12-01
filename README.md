@@ -26,6 +26,7 @@ jobs:
         env:
           HEROKU_API_TOKEN: ${{ secrets.HEROKU_API_TOKEN }}
           HEROKU_PIPELINE_ID: ${{ secrets.HEROKU_PIPELINE_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 If you want to destroy a review app when the PR is closed.
@@ -48,6 +49,8 @@ jobs:
           HEROKU_API_TOKEN: ${{ secrets.HEROKU_API_TOKEN }}
           HEROKU_PIPELINE_ID: ${{ secrets.HEROKU_PIPELINE_ID }}
 ```
+
+> Note GITHUB_TOKEN is not needed for the `destroy` action
 
 # Configuration
 
