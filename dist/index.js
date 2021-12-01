@@ -9153,6 +9153,7 @@ const pr_number = pr.number;
 const repo_url = ctx.payload.repository.html_url;
 const source_url = `${repo_url}/tarball/${branch}`;
 const action = core.getInput("action");
+const pipeline = process.env.HEROKU_PIPELINE_ID;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         if (fork) {
@@ -9175,7 +9176,7 @@ function run() {
             case "destroy":
                 core.info("Fetching review app list");
                 try {
-                    const reviewApps = yield heroku.get(`/pipelines/${process.env.HEROKU_PIPELINE_ID}/review-apps`);
+                    const reviewApps = yield heroku.get(`/pipelines/${pipeline}/review-apps`);
                     // Get the Review App for this PR
                     const app = reviewApps.find((app) => app.pr_number == pr_number);
                     if (app) {
@@ -9192,20 +9193,18 @@ function run() {
             case "create":
                 try {
                     core.info("Creating review app");
-                    yield heroku.post("/review-apps", {
+                    const response = yield heroku.post("/review-apps", {
                         body: {
                             branch,
-                            pipeline: process.env.HEROKU_PIPELINE_ID,
+                            pipeline,
                             source_blob: {
                                 url: source_url,
                                 version,
                             },
                             pr_number,
-                            environment: {
-                                GIT_REPO_URL: repo_url,
-                            },
                         },
                     });
+                    core.debug(response);
                     core.info("Created review app");
                 }
                 catch (error) {
