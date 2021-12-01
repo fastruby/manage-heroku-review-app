@@ -9144,15 +9144,17 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const HerokuClient = __nccwpck_require__(504);
+core.debug(JSON.stringify(github.context));
 const ctx = github.context;
 const pr = ctx.payload.pull_request;
 const fork = pr.head.repo.fork;
 const branch = pr.head.ref;
-const version = ctx.sha;
+const version = pr.head.sha;
 const pr_number = pr.number;
 const repo_url = ctx.payload.repository.html_url;
 const source_url = `${repo_url}/tarball/${branch}`;
 const action = core.getInput("action");
+const pipeline = process.env.HEROKU_PIPELINE_ID;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         if (fork) {
@@ -9173,15 +9175,14 @@ function run() {
         }
         switch (action) {
             case "destroy":
-                core.info("Fetching review app list");
+                core.info("Fetching Review Apps list");
                 try {
-                    const reviewApps = yield heroku.get(`/pipelines/${process.env.HEROKU_PIPELINE_ID}/review-apps`);
-                    // Get the Review App for this PR
+                    const reviewApps = yield heroku.get(`/pipelines/${pipeline}/review-apps`);
                     const app = reviewApps.find((app) => app.pr_number == pr_number);
                     if (app) {
-                        core.info("Deleting review app");
+                        core.info("Destroying Review App");
                         yield heroku.delete(`/review-apps/${app.id}`);
-                        core.info("Review app deleted");
+                        core.info("Review App destroyed");
                     }
                 }
                 catch (error) {
@@ -9191,22 +9192,29 @@ function run() {
                 break;
             case "create":
                 try {
-                    core.info("Creating review app");
-                    yield heroku.post("/review-apps", {
+                    core.info("Creating Review App");
+                    core.debug(JSON.stringify({
+                        branch,
+                        pipeline,
+                        source_blob: {
+                            url: source_url,
+                            version,
+                        },
+                        pr_number,
+                    }));
+                    const response = yield heroku.post("/review-apps", {
                         body: {
                             branch,
-                            pipeline: process.env.HEROKU_PIPELINE_ID,
+                            pipeline,
                             source_blob: {
                                 url: source_url,
                                 version,
                             },
                             pr_number,
-                            environment: {
-                                GIT_REPO_URL: repo_url,
-                            },
                         },
                     });
-                    core.info("Created review app");
+                    core.debug(response);
+                    core.info("Review App created");
                 }
                 catch (error) {
                     core.error(JSON.stringify(error));
@@ -9216,7 +9224,6 @@ function run() {
                 core.debug("Invalid action, no action was performed, use one of 'create' or 'destroy'");
                 break;
         }
-        core.info("Action completed");
     });
 }
 run();
