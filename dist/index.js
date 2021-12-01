@@ -9144,6 +9144,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const HerokuClient = __nccwpck_require__(504);
+core.debug(JSON.stringify(github.context));
 const ctx = github.context;
 const pr = ctx.payload.pull_request;
 const fork = pr.head.repo.fork;

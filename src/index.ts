@@ -8,6 +8,8 @@ interface ReviewApp {
   id: number;
 }
 
+core.debug(JSON.stringify(github.context));
+
 const ctx = github.context;
 const pr = ctx.payload.pull_request!;
 const fork = pr.head.repo.fork;
