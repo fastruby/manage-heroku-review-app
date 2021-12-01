@@ -8,6 +8,11 @@ interface ReviewApp {
   id: number;
 }
 
+interface TarballResponse {
+  status: number;
+  url: string;
+}
+
 async function run() {
   core.debug(JSON.stringify(github.context));
 
@@ -78,11 +83,13 @@ async function run() {
       return;
     }
 
-    const source_url = octokit.rest.repos.downloadTarballArchive({
-      owner: issue.owner,
-      repo: issue.repo,
-      ref: branch,
-    });
+    const { url }: TarballResponse =
+      await octokit.rest.repos.downloadTarballArchive({
+        method: "HEAD",
+        owner: issue.owner,
+        repo: issue.repo,
+        ref: branch,
+      });
 
     try {
       core.info("Creating Review App");
@@ -91,7 +98,7 @@ async function run() {
           branch,
           pipeline,
           source_blob: {
-            url: source_url,
+            url,
             version,
           },
           pr_number,
@@ -102,7 +109,7 @@ async function run() {
           branch,
           pipeline,
           source_blob: {
-            url: source_url,
+            url,
             version,
           },
           pr_number,

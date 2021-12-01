@@ -9199,7 +9199,8 @@ function run() {
                 core.error("Couldn't connect to GitHub, make sure the GITHUB_TOKEN is a valid token");
                 return;
             }
-            const source_url = octokit.rest.repos.downloadTarballArchive({
+            const { url } = yield octokit.rest.repos.downloadTarballArchive({
+                method: "HEAD",
                 owner: issue.owner,
                 repo: issue.repo,
                 ref: branch,
@@ -9210,7 +9211,7 @@ function run() {
                     branch,
                     pipeline,
                     source_blob: {
-                        url: source_url,
+                        url,
                         version,
                     },
                     pr_number,
@@ -9220,7 +9221,7 @@ function run() {
                         branch,
                         pipeline,
                         source_blob: {
-                            url: source_url,
+                            url,
                             version,
                         },
                         pr_number,
