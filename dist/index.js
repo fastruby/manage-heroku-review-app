@@ -9151,16 +9151,30 @@ const fork = pr.head.repo.fork;
 const branch = pr.head.ref;
 const version = pr.head.sha;
 const pr_number = pr.number;
-const repo_url = ctx.payload.repository.html_url;
-const source_url = `${repo_url}/tarball/${branch}`;
 const action = core.getInput("action");
 const pipeline = process.env.HEROKU_PIPELINE_ID;
+const issue = ctx.issue;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         if (fork) {
             core.info("PRs from forked repos can't trigger this action");
             return;
         }
+        core.debug("init octokit");
+        if (!process.env.GITHUB_TOKEN) {
+            core.error("Couldn't connect to GitHub, make sure the GITHUB_TOKEN secret is set");
+            return;
+        }
+        const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
+        if (!octokit) {
+            core.error("Couldn't connect to GitHub, make sure the GITHUB_TOKEN is a valid token");
+            return;
+        }
+        const source_url = octokit.rest.repos.downloadTarballArchive({
+            owner: issue.owner,
+            repo: issue.repo,
+            ref: branch,
+        });
         core.debug("connecting to heroku");
         let heroku;
         try {
