@@ -9175,15 +9175,14 @@ function run() {
         }
         switch (action) {
             case "destroy":
-                core.info("Fetching review app list");
+                core.info("Fetching Review Apps list");
                 try {
                     const reviewApps = yield heroku.get(`/pipelines/${pipeline}/review-apps`);
-                    // Get the Review App for this PR
                     const app = reviewApps.find((app) => app.pr_number == pr_number);
                     if (app) {
-                        core.info("Deleting review app");
+                        core.info("Destroying Review App");
                         yield heroku.delete(`/review-apps/${app.id}`);
-                        core.info("Review app deleted");
+                        core.info("Review App destroyed");
                     }
                 }
                 catch (error) {
@@ -9193,7 +9192,7 @@ function run() {
                 break;
             case "create":
                 try {
-                    core.info("Creating review app");
+                    core.info("Creating Review App");
                     core.debug(JSON.stringify({
                         branch,
                         pipeline,
@@ -9215,7 +9214,7 @@ function run() {
                         },
                     });
                     core.debug(response);
-                    core.info("Created review app");
+                    core.info("Review App created");
                 }
                 catch (error) {
                     core.error(JSON.stringify(error));
@@ -9225,7 +9224,6 @@ function run() {
                 core.debug("Invalid action, no action was performed, use one of 'create' or 'destroy'");
                 break;
         }
-        core.info("Action completed");
     });
 }
 run();
