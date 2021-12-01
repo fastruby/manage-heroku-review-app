@@ -64,6 +64,17 @@ async function run() {
     case "create":
       try {
         core.info("Creating review app");
+        core.debug(
+          JSON.stringify({
+            branch,
+            pipeline,
+            source_blob: {
+              url: source_url,
+              version,
+            },
+            pr_number,
+          })
+        );
         const response = await heroku.post("/review-apps", {
           body: {
             branch,
